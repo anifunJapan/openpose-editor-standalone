@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OpenPose Editor Standalone</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <main class="app-shell">
+    <aside class="toolbar" aria-label="Editor controls">
+      <header class="toolbar-header">
+        <h1>OpenPose Editor</h1>
+        <span class="status" id="status">Ready</span>
+      </header>
+
+      <section class="control-group">
+        <label>Width <input id="widthInput" type="number" min="64" max="2048" step="64" value="512"></label>
+        <label>Height <input id="heightInput" type="number" min="64" max="2048" step="64" value="512"></label>
+        <button id="resizeButton" type="button">Resize</button>
+      </section>
+
+      <section class="button-grid">
+        <button id="addPoseButton" type="button">Add Pose</button>
+        <button id="resetButton" type="button">Reset</button>
+        <button id="deleteButton" type="button">Delete</button>
+        <button id="duplicateButton" type="button">Duplicate</button>
+        <button id="undoButton" type="button">Undo</button>
+        <button id="redoButton" type="button">Redo</button>
+      </section>
+
+      <section class="control-group">
+        <label class="file-button">Load JSON <input id="jsonInput" type="file" accept="application/json,.json"></label>
+        <label class="file-button">Add Background <input id="backgroundInput" type="file" accept="image/*"></label>
+        <button id="saveJsonButton" type="button">Save JSON</button>
+        <button id="savePngButton" type="button">Save PNG</button>
+      </section>
+
+      <section class="control-group">
+        <label>Preset <select id="presetSelect"></select></label>
+        <div class="button-row">
+          <button id="loadPresetButton" type="button">Load</button>
+          <button id="savePresetButton" type="button">Save</button>
+        </div>
+      </section>
+    </aside>
+
+    <section class="canvas-panel" aria-label="Pose canvas">
+      <div class="canvas-stage" id="canvasStage">
+        <canvas id="openpose_editor_canvas" width="512" height="512"></canvas>
+        <div class="drop-overlay" id="dropOverlay">Drop JSON or image</div>
+      </div>
+    </section>
+  </main>
+
+  <script src="../javascript/fabric.js"></script>
+  <script src="./standalone.js"></script>
+</body>
+</html>

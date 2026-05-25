@@ -1,0 +1,198 @@
+:root {
+  color-scheme: dark;
+  --bg: #151719;
+  --panel: #22262a;
+  --panel-strong: #1b1f23;
+  --ink: #e7e3d8;
+  --muted: #aaa59a;
+  --line: #343a40;
+  --accent: #2c9f94;
+  --accent-strong: #37b7aa;
+  --danger: #e27b7b;
+  --canvas-bg: #050505;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+button, input, select { font: inherit; }
+
+button,
+.file-button {
+  min-height: 36px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--panel);
+  color: var(--ink);
+  cursor: pointer;
+}
+
+button:hover,
+.file-button:hover { border-color: var(--accent); }
+
+button:active { transform: translateY(1px); }
+
+.app-shell {
+  display: grid;
+  grid-template-columns: minmax(260px, 320px) 1fr;
+  min-height: 100vh;
+}
+
+.toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 18px;
+  border-right: 1px solid var(--line);
+  background: var(--panel-strong);
+}
+
+.toolbar-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+h1 {
+  margin: 0;
+  font-size: 22px;
+  line-height: 1.15;
+}
+
+.status {
+  max-width: 128px;
+  color: var(--muted);
+  font-size: 12px;
+  text-align: right;
+}
+
+.control-group,
+.button-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.button-grid,
+.button-row {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.button-row {
+  display: grid;
+  gap: 8px;
+}
+
+label {
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+input[type="number"],
+select {
+  width: 100%;
+  min-height: 36px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 6px 8px;
+  background: var(--panel);
+  color: var(--ink);
+}
+
+input[type="number"]:focus,
+select:focus,
+button:focus-visible,
+.file-button:focus-within {
+  outline: 2px solid rgba(44, 159, 148, 0.45);
+  outline-offset: 2px;
+}
+
+.file-button {
+  display: grid;
+  place-items: center;
+  padding: 0 10px;
+  color: var(--ink);
+}
+
+.file-button input { display: none; }
+
+#resizeButton,
+#saveJsonButton,
+#savePngButton {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #ffffff;
+}
+
+#resizeButton:hover,
+#saveJsonButton:hover,
+#savePngButton:hover {
+  background: var(--accent-strong);
+  border-color: var(--accent-strong);
+}
+
+#deleteButton { color: var(--danger); }
+
+.canvas-panel {
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  padding: 20px;
+  overflow: auto;
+}
+
+.canvas-stage {
+  position: relative;
+  width: min(100%, 78vw);
+  height: min(100vh - 40px, 78vw);
+  max-width: 900px;
+  max-height: 900px;
+  display: grid;
+  place-items: center;
+}
+
+.canvas-container {
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.42);
+}
+
+#openpose_editor_canvas {
+  display: block;
+  background: var(--canvas-bg);
+}
+
+.drop-overlay {
+  position: absolute;
+  inset: 0;
+  display: none;
+  place-items: center;
+  border: 2px dashed rgba(255, 255, 255, 0.8);
+  background: rgba(0, 0, 0, 0.55);
+  color: #ffffff;
+  font-size: clamp(18px, 3vw, 34px);
+  font-weight: 700;
+  pointer-events: none;
+}
+
+.canvas-stage.dragging .drop-overlay { display: grid; }
+
+@media (max-width: 760px) {
+  .app-shell { grid-template-columns: 1fr; }
+  .toolbar {
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .canvas-panel { min-height: 60vh; }
+  .canvas-stage {
+    width: calc(100vw - 24px);
+    height: calc(100vw - 24px);
+  }
+}
