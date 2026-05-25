@@ -15,9 +15,24 @@
       </header>
 
       <section class="control-group">
-        <label>Width <input id="widthInput" type="number" min="64" max="2048" step="64" value="512"></label>
-        <label>Height <input id="heightInput" type="number" min="64" max="2048" step="64" value="512"></label>
+        <div class="size-control">
+          <span class="control-label">Size</span>
+          <div class="size-label-row" aria-hidden="true">
+            <span>Width</span>
+            <span>Height</span>
+          </div>
+          <div class="size-row">
+            <input id="widthInput" type="number" min="64" max="2048" step="64" value="512" aria-label="Width">
+            <span class="size-separator" aria-hidden="true">x</span>
+            <input id="heightInput" type="number" min="64" max="2048" step="64" value="512" aria-label="Height">
+          </div>
+        </div>
         <button id="resizeButton" type="button">Resize</button>
+        <div class="display-control">
+          <span class="control-label">Display</span>
+          <label>Line Width <input id="lineWidthInput" type="number" min="1" max="10" step="1" value="4"></label>
+          <label>Joint Size <input id="jointSizeInput" type="number" min="1" max="12" step="1" value="4"></label>
+        </div>
       </section>
 
       <section class="button-grid">

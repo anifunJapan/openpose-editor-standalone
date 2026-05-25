@@ -7,17 +7,25 @@ const connectKeypoints = [[0, 1], [1, 2], [2, 3], [3, 4], [1, 5], [5, 6], [6, 7]
 const connectColor = [[0, 0, 255], [255, 0, 0], [255, 170, 0], [255, 255, 0], [255, 85, 0], [170, 255, 0], [85, 255, 0], [0, 255, 0], [0, 255, 85], [0, 255, 170], [0, 255, 255], [0, 170, 255], [0, 85, 255], [85, 0, 255], [170, 0, 255], [255, 0, 255], [255, 0, 170], [255, 0, 85]];
 const defaultKeypoints = [[241, 77], [241, 120], [191, 118], [177, 183], [163, 252], [298, 118], [317, 182], [332, 245], [225, 241], [213, 359], [215, 454], [270, 240], [282, 360], [286, 456], [232, 59], [253, 60], [225, 70], [260, 72]];
 const historyProps = ["posePoint", "poseLine", "pointId", "fromPoint", "toPoint"];
+const displayStorageKey = "openpose-editor-display-settings";
+const defaultDisplay = {
+  lineWidth: 4,
+  jointSize: 4
+};
 
 const state = {
   canvas: null,
   lockHistory: false,
   undo: [],
-  redo: []
+  redo: [],
+  display: { ...defaultDisplay }
 };
 
 const ui = {
   width: document.getElementById("widthInput"),
   height: document.getElementById("heightInput"),
+  lineWidth: document.getElementById("lineWidthInput"),
+  jointSize: document.getElementById("jointSizeInput"),
   resize: document.getElementById("resizeButton"),
   add: document.getElementById("addPoseButton"),
   reset: document.getElementById("resetButton"),
@@ -55,6 +63,7 @@ function restore(json) {
   state.lockHistory = true;
   state.canvas.loadFromJSON(json, () => {
     relinkLines();
+    applyDisplaySettings(false);
     state.canvas.renderAll();
     fitCanvas();
     state.lockHistory = false;
@@ -96,11 +105,75 @@ function resizeCanvas(width, height, keepHistory = true) {
   if (keepHistory) pushHistory();
 }
 
+function clampNumber(value, min, max, fallback) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return fallback;
+  return Math.min(max, Math.max(min, Math.round(number)));
+}
+
+function readDisplaySettings() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(displayStorageKey) || "{}");
+    return {
+      lineWidth: clampNumber(saved.lineWidth, 1, 10, defaultDisplay.lineWidth),
+      jointSize: clampNumber(saved.jointSize, 1, 12, defaultDisplay.jointSize)
+    };
+  } catch (_) {
+    return { ...defaultDisplay };
+  }
+}
+
+function writeDisplaySettings() {
+  localStorage.setItem(displayStorageKey, JSON.stringify(state.display));
+}
+
+function syncDisplayInputs() {
+  ui.lineWidth.value = state.display.lineWidth;
+  ui.jointSize.value = state.display.jointSize;
+}
+
+function applyDisplaySettings(save = true, syncInputs = true) {
+  state.display.lineWidth = clampNumber(state.display.lineWidth, 1, 10, defaultDisplay.lineWidth);
+  state.display.jointSize = clampNumber(state.display.jointSize, 1, 12, defaultDisplay.jointSize);
+  if (syncInputs) syncDisplayInputs();
+  state.canvas.getObjects().forEach((item) => {
+    if (item.poseLine) item.set({ strokeWidth: state.display.lineWidth });
+    if (item.posePoint) item.set({ radius: state.display.jointSize });
+    item.setCoords();
+  });
+  state.canvas.requestRenderAll();
+  if (save) writeDisplaySettings();
+}
+
+function updateDisplaySetting(key, commit = false) {
+  const config = key === "lineWidth"
+    ? { input: ui.lineWidth, min: 1, max: 10, fallback: defaultDisplay.lineWidth }
+    : { input: ui.jointSize, min: 1, max: 12, fallback: defaultDisplay.jointSize };
+
+  if (config.input.value === "") {
+    if (!commit) return;
+    state.display[key] = config.fallback;
+    applyDisplaySettings();
+    return;
+  }
+
+  const value = Number(config.input.value);
+  if (!Number.isFinite(value)) {
+    if (!commit) return;
+    state.display[key] = config.fallback;
+    applyDisplaySettings();
+    return;
+  }
+
+  state.display[key] = clampNumber(value, config.min, config.max, config.fallback);
+  applyDisplaySettings(true, commit);
+}
+
 function makeLine(points, color, fromPoint, toPoint) {
   return new fabric.Line(points, {
     fill: color,
     stroke: color,
-    strokeWidth: 10,
+    strokeWidth: state.display.lineWidth,
     selectable: false,
     evented: false,
     originX: "center",
@@ -115,7 +188,7 @@ function makeCircle(point, color, pointId, lineRefs) {
   const circle = new fabric.Circle({
     left: point[0],
     top: point[1],
-    radius: 5,
+    radius: state.display.jointSize,
     fill: color,
     stroke: color,
     strokeWidth: 1,
@@ -408,8 +481,23 @@ function loadPreset() {
   loadPoseJson(presets()[name]);
 }
 
+function isEditingInput(target) {
+  return target && (
+    target.tagName === "INPUT" ||
+    target.tagName === "SELECT" ||
+    target.tagName === "TEXTAREA" ||
+    target.isContentEditable
+  );
+}
+
 function bindEvents() {
   ui.resize.addEventListener("click", () => resizeCanvas(Number(ui.width.value), Number(ui.height.value)));
+  ui.lineWidth.addEventListener("input", () => updateDisplaySetting("lineWidth"));
+  ui.lineWidth.addEventListener("change", () => updateDisplaySetting("lineWidth", true));
+  ui.lineWidth.addEventListener("blur", () => updateDisplaySetting("lineWidth", true));
+  ui.jointSize.addEventListener("input", () => updateDisplaySetting("jointSize"));
+  ui.jointSize.addEventListener("change", () => updateDisplaySetting("jointSize", true));
+  ui.jointSize.addEventListener("blur", () => updateDisplaySetting("jointSize", true));
   ui.add.addEventListener("click", () => addPose());
   ui.reset.addEventListener("click", resetCanvas);
   ui.del.addEventListener("click", deleteSelection);
@@ -430,7 +518,7 @@ function bindEvents() {
     } else if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "y") {
       event.preventDefault();
       redo();
-    } else if (event.key === "Delete" || event.key === "Backspace") {
+    } else if (event.key === "Delete" && !isEditingInput(event.target)) {
       deleteSelection();
     }
   });
@@ -454,6 +542,8 @@ function init() {
     backgroundColor: "#000",
     preserveObjectStacking: true
   });
+  state.display = readDisplaySettings();
+  syncDisplayInputs();
   state.canvas.on("object:moving", (event) => updateLines(event.target));
   state.canvas.on("object:scaling", (event) => updateLines(event.target));
   state.canvas.on("object:rotating", (event) => updateLines(event.target));
